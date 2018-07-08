@@ -1,0 +1,439 @@
+源码后的改动：
+1）movies.wxss 文件（由于从搜索结果页面返回到电影主页面，点击X的同时与主页电影页面，搜索框和X的位置较近，导致不正常效果）
+  原始代码：
+  .search input {
+    height: 100%;
+    width: 600rpx;
+    margin-left: 20px;
+    font-size: 28rpx;
+  }
+  改后代码：
+  .search input {
+    height: 100%;
+    width: 560rpx;
+    margin-left: 20px;
+    font-size: 28rpx;
+    margin-right: 20px;
+  }
+2）movies.js 文件 （搜索电影结果后，我直接点击【文章】跳转到文章tab后，再次点击【电影】后还是显示搜索结果页面，由于我个人操作习惯，不是很喜欢这么展示，故更改为）
+  原始代码：
+    onShow页面生命周期函数，不需要任何操作。
+
+  改后代码：
+    我在onShow页面生命周期函数加入了这段代码（从文章页面进入到电影页面，初始化代码，由于tab切换选项卡只能执行最开始的一次，不能在onload里操作了，只能通过onShow进行监听）
+    onShow: function () {
+      this.setData({
+        containerShow: true,
+        searchPanelShow: false,
+        searchResult: {}
+      })
+    }
+
+
+
+
+1.小程序页面脚本的生命周期执行顺序，页面打开后onLoad - onShow - onReady
+
+2.onTap: function() {
+    // wx.navigateTo从父页面一直往下面跳转最多5级，每个子页面左      上方可以返回一层层上一级
+    // wx.navigateTo({
+    //   url: "../posts/post"
+    // });
+    // wx.redirectTo关闭当前页面跳转到下一个页面，左上角不能返回    上级页面
+    wx.redirectTo({
+      url: "../posts/post"
+    })
+  },
+
+3. 使用wx.redirectTo进行跳转会触发onUnload函数（监听页面卸载），关闭的页面等同于卸载
+
+4. 使用wx.navigateTo进行跳转到子页面会触发onHide函数（监听页面隐藏），子页面的上一级等同于隐藏
+
+5. wx.navigateTo 和 wx.redirectTo 完整方法
+wx.navigateTo({
+      url: 'String',
+      success: function(res) {
+        // success 成功
+      },
+      fail: function() {
+        // fail 失败
+      },
+      complete: function() {
+        // complete 无论是成功和失败都执行
+      }
+    })
+
+6. 事件绑定和冒泡
+
+<view id="outer" bindtap="handleTap1">
+  outer view
+  <view id="middle" catchtap="handleTap2">  // 不会触发父级的事件
+    middle view
+    <view id="inner" bindtap="handleTap3">
+      inner view
+    </view>
+  </view>
+</view>
+
+7. 组件js里的数据从外部文件引入
+如：var postsData = require("../../data/posts-data.js") 必须要用相对路径
+在外部定义的posts-data.js中定义数据
+var local_database = [{
+...........
+...........
+}]
+module.exports = { // 可以定义多条数据或者api服务端地址
+  postList: local_database，
+  .......
+  .......
+  .......
+  .......
+}
+
+组件的js里暴露出数据为：
+this.setData({
+   postList: postsData.postList
+  });
+组件中使用wx:for="postList" 进行循环数据，循环的数据坐标为item，可以省略不写
+
+8. // 小程序总是会读取data对象来做数据绑定，这个动作我们称为动作A
+   // 而这个动作A的执行，是在onLoad事件执行之后发生的
+// this.data.postList = postsData.postList; 这种定义类型表示只能在同步里使用
+    this.setData({ // 这种定义类型既可以在同步又能在异步代码里使用， （优选使用）
+      postList: postsData.postList
+    });
+
+9. // 小程序模板化（template） 可以参考 post-item 于 post-item-template.wxml代码
+  模板中只能创建wxml 和 wxss 2个文件，模板可以定义为公共模板，方面组件引用
+使用方法：在模板中定义 
+<template name="postItem"> // name里定义的值是为了组件中引入模板后使用的值
+	<view>代码省略（可以理解为html代码）</view>
+</template>
+使用方法：组件中使用，首先引入模板代码文件如：<import src="post-item/post-item-template.wxml"/> 路径可以相对也可以使用绝对路径
+需要使用模板代码处使用 <template is="postItem" data="{{item}}"/> 就可以使用模板代码了，data="{{给模板中传入数据}}"
+
+引入template模板中的样式表方式：@import "post-item/post-item-template.wxss";
+
+10. 扩展运算符 
+例如： <template is="postItem" data="{{item}}"/>可以将 item 改成{{...item}} 模板中的数据绑定去掉 item.title 等等数据绑定，直接写title即可
+
+11. 如果template模板是列表（需要事件处理或者点击）
+那么在组件引用 <template is="postItem" data="{{item}}"/> 加入一层view，也就是<view catchtap="onPostTap" postId="{{item.postId}}"> <template is="postItem" data="{{item}}"/></view>
+将事件点击写在view上面。
+
+12. 列表中的事件点击并且传值到另一个页面
+首先在绑定事件的标签中自定义需要传递的值 必须是data-xxx ，（data-postid）别的无效 （data-xxx 可以在标签上定义多个）
+在js脚本里获取通过事件的event；  如：var postId = event.currentTarget.dataset.postid; （微信文档中规定一定要event.currentTarget.dataset这里进行获取）
+postId 就可以随着页面跳转进行传值了。
+
+13. 小程序缓存（Stroage） 需要多看文档里讲解，内容较多
+wx.setStorageSync("key", "111") 同步存储
+wx.getStorageSync('key'); 同步获取缓存数据
+wx.removeStorageSync('key') 删除同步缓存
+wx.clearStorageSync() 括号里不需要放值， 因为是清除所有缓存数据
+
+14. wx.showModal 弹出提示(模态框)需要手动点击操作
+ wx.showModal({
+      title: '收藏',
+      content: postCollected?"收藏该文章？" : "取消收藏该文章？",
+      showCancel: true,
+      cancelText: '取消',
+      cancelColor: '#333',
+      confirmText: '确认',
+      confirmColor: '#405f80',
+      success: function (res) {
+        if (res.confirm) {
+         console.log("用户点击确定")
+        } else if (res.cancel) {
+          console.log('用户点击取消')
+        }
+      }
+    })
+15. wx.showToast 弹出提示可以设置几秒消失
+wx.showToast({ // 微信提示框
+      title: postCollected ? "收藏成功" : "取消成功",
+      duration: 1000,
+      icon: "success"
+})
+
+16. wx.showActionSheet 用于设置点击分享类似的操作 （最多设置6个）
+示例： 
+wx.showActionSheet({
+      itemList: [
+        "分享给微信好友",
+        "分享到朋友圈",
+        "分享到QQ",
+        "分享到微博"
+      ],
+      success: function (res) {
+        wx.showModal({
+          title: '用户' + itemList[res.tapIndex], // res.tapIndex是指用户点击了哪个 0 1 2 3 .....
+        })
+      },
+ })
+
+17. 小程序媒体文件，比如：音乐，音乐封面图，不要放在本地目录，因为小程序限制大小，媒体文件远远超过1M。
+
+
+18. 小程序根目录app.js的生命周期函数执行顺序
+从小程序打开，开始 onLaunch（当小程序初始化完成时，会触发 onLaunch（全局只触发一次）） - onShow（当小程序启动，或从后台进入前台显示） 只执行2个函数
+点击右上角关闭按钮 会执行onHide 函数（当小程序从前台进入后台）
+
+19. 小程序根目录app.js里除了微信自己的生命周期，还可以自定义全局变量，比如：
+globalData: {
+    g_isPlayingMusic: false,
+    g_currentMusicPostId: null
+  },
+全局变量定义之后，可以在所有页面中使用，使用方法：
+首先在组件js中顶部定义 var app = getApp()； 然后可以在需要与全局变量进行沟通的代码位置写，比如：app.globalData.g_isPlayingMusic 即可获取到全局变量
+如需要更改全局变量：app.globalData.g_isPlayingMusic = true；与组件中的更改页面渲染不同
+
+20. 小程序音乐播放 监听函数 wx.onBackgroundAudioPlay（）（音乐开始播放），wx.onBackgroundAudioPause()（音乐暂停播放，在点击开始播放从当前暂停位置继续播放），wx.onBackgroundAudioStop()（停止音乐播放，再次播放从头开始播放）
+示例： 如果需要页面初始化进行监听音乐状态，就放在生命周期 onLoad：function（）{} 里
+var that = this;
+    wx.onBackgroundAudioPlay(function () {
+      that.setData({
+        isPlayingMusic: true
+      })
+      app.globalData.g_isPlayingMusic = true; // 改变全局变量，避免下次进入页面音乐播放的图标不正常显示
+      app.globalData.g_currentMusicPostId = that.data.currentPostId; // 获取当前哪个音乐在播放
+    });
+
+
+21. wx.playBackgroundAudio （音乐开始播放），wx.pauseBackgroundAudio()（音乐暂停播放），wx.stopBackgroundAudio()（音乐停止播放）
+
+示例：
+wx.playBackgroundAudio({ // 一定要在后台数据获取，或者本地json中获取播放参数
+    dataUrl: '', // 播放源链接，不能用本地文件，本身小程序就不能存储大文件
+    title: '', // 如： 歌曲-歌手
+    coverImgUrl: '' // 如：专辑/歌手头像
+})
+示例：
+wx.pauseBackgroundAudio()/ wx.stopBackgroundAudio()
+
+22. 真机如何清除缓存与template内路径问题
+关于真机清除缓存问题：最好在页面中添加个点击事件调用wx.clearStorage() 即可
+template小程序模板中如果有静态图片比如：icon ，image 一定要使用绝对路径， 使用相对路径会导致一些问题，比如：不显示图标
+
+23. swiper轮播图点击事件，如果获取<swiper-item>里面的image标签上面的自定义属性data-xxx="xxx"
+示例：
+onSwiperTap: function(event) { // onSwiperTap绑定在swiper上面
+    // target 和 currentTarget
+    // target指的是当前点击的组件， currentTarget指的是事件捕获的组件
+    // target这里指的是image， 而currentTarget指的是swiper
+    var postId = event.target.dataset.postid;
+    wx.navigateTo({
+      url: "post-detail/post-detail?id=" + postId
+    })
+  },
+
+24. 如果从一个页面跳转到另一个页面（此页面带有tab选项卡切换）不能使用wx.navigateTo 和 wx.redirectTo ，需要从父级点击事件处用wx.switchTab的url:指向跳转页面
+
+wx.navigateTo 和 wx.redirectTo 不允许跳转到 tabbar 页面，只能用 wx.switchTab 跳转到 tabbar 页面
+示例：
+wx.switchTab({
+   url: "../posts/post"
+});
+
+25. 如果在异步获取数据需要对data里进行对象赋值，要在data里定义对象名，可以是一个空对象
+示例：
+data: {
+    inTheaters: {},
+    comingSoon: {},
+    top250Url: {}
+  };
+
+this.setData(inTheaters);
+this.data.inTheaters = xxx;
+
+
+26. 如果在外部自定义文件.js 里写函数/方法等代码，写完后需要使用 module.exports = {} 对外部暴露，组件js中在进行引用这个文件使用
+示例：
+function convertToStarsArray(stars) {
+  var num = stars.toString().substring(0,1);
+  var array = [];
+  for (var i = 1; i<=5; i++) {
+    if (i <= num) {
+      array.push(1);
+    } else {
+      array.push(0);
+    }
+  }
+  return array;
+}
+module.exports = {
+  convertToStarsArray: convertToStarsArray
+}
+
+27. 小程序动态设置导航栏标题setNavigationBarTitle， 比如从一个页面通过参数传递到另一个页面，这个页面的标题根据参数而不固定显示则使用 wx.setNavigationBarTitle
+示例：
+onLoad: function (options) {
+    // 获取上一个页面传递的参数，赋值到下面代码使用
+  var category = options.category
+； 
+  wx.setNavigationBarTitle({
+      
+	title: category
+    
+  })
+  
+},
+
+
+28. 封装wx.request 到全局
+示例：
+function http (url, callBack) { // 第二个参数，回调函数，在js里使用callBack:function(data) { console.log(data) } 可以获取到数据
+  wx.request({
+    url: url,
+    header: {
+      'content-type': 'json'
+    },
+    method: "GET",
+    success: function (res) {
+      callBack(res.data);
+    },
+    fail: function () {
+
+    }
+  })
+}
+
+29. 上拉加载更多bindscrolltolower（滚动到底部/右边，会触发 scrolltolower 事件） 先要在组件中使用<scroll-view class="grid-containe">...其他标签....</scroll-view>
+注意：使用scroll-view 一定要定义他的高度例如：  .grid-containe{height: 1300rpx};
+微信官方：使用竖向滚动时，需要给<scroll-view/>一个固定高度，通过 WXSS 设置 height。
+示例：
+<scroll-view class="grid-container" scroll-y="true" scroll-x="false" bindscrolltolower="onScrollLower">
+   
+ <block wx:for="{{movies}}" wx:for-item="movie" wx:key="">
+   
+   <view class="single-view-container">
+    
+    <template is="movieTemplate" data="{{...movie}}" />
+   
+   </view>
+  
+  </block>
+ 
+ </scroll-view>
+
+然后在组件js中定义 onScrollLower 这个方法：
+示例：
+ onScrollLower: function (event) { // this.data.requestUrl 和 this.data.totalCount从 data里可以获得
+ 
+   console.log("加载更多")  
+   var nextUrl = this.data.requestUrl + "?start=" + this.data.totalCount + "&count=20";
+ 
+   util.http(nextUrl, this.processDoubanData); // 上面拼接好的新的url 进行请求
+ 
+ },
+
+
+30. 设置上拉加载更多底部loading效果用wx.showNavigationBarLoading() 显示 和 wx.hideNavigationBarLoading()隐藏 和 wx.stopPullDownRefresh() 停止， 在官方api （设置指定信息底部代码中）
+二者在page中都有自己的生命周期方法
+
+
+31. backgroundColor在全局json中使用，当设置此属性时，页面下拉刷新顶部背景出现的一块区域将会改变成设置的颜色
+
+32. input 输入框聚焦时触发，event.detail = { value, height }，height 为键盘高度； bindblur 输入框失去焦点时触发，event.detail = {value: value}；
+bindblur事件在最近版本的模拟器中已经支持键盘回车。
+bindinput 键盘输入时触发，event.detail = {value, cursor, keyCode}，keyCode 为键值，2.1.0 起支持，处理函数可以直接 return 一个字符串，将替换输入框的内容。
+三个事件定义后，都要在参数 event 中获取对应的值 。 bindinput 可以连续输出输出的内容，比如：音乐连续搜索等功能
+
+
+33. 小程序image 上的  mode 属性作用（图片裁剪、缩放的模式） 注：image组件默认宽度300px、高度225px
+mode 有 13 种模式，其中 4 种是缩放模式，9 种是裁剪模式。
+注意： 图片裁剪 和 缩放 不能同时使用
+示例地址：
+https://developers.weixin.qq.com/miniprogram/dev/component/image.html
+
+
+34. 小程序中rpx 与 px 字体大小关系
+rpx是指像素随着设备改变
+px是指在任何设备下，像素都是设定的px像素
+
+35. 小程序查看大图 ，图片放大效果
+示例：
+viewMoviePostImg: function(event) {
+  
+  var src = event.currentTarget.dataset.src;
+  // 获取image图片上面定义的src地址赋值到下面代码中使用
+   wx.previewImage({
+  
+    current: src, // 当前显示图片的http链接
+   
+    urls: [src] // 需要预览的图片http链接列表
+   
+  })
+ 
+ },
+
+
+35. 关于小程序下拉刷新不能使用<scroll-view>问题
+
+tip: 请勿在 scroll-view 中使用 textarea、map、canvas、video 组件
+tip: scroll-into-view 的优先级高于 scroll-top
+tip: 在滚动 scroll-view 时会阻止页面回弹，所以在 scroll-view 中滚动，是无法触发 onPullDownRefresh
+tip: 若要使用下拉刷新，请使用页面的滚动，而不是 scroll-view ，这样也能通过点击顶部状态栏回到页面顶部
+
+如果需要使用【下拉刷新】操作，直接使用生命周期中的 onReachBottom
+示例：
+
+ /**
+   * 页面上拉触底事件的处理函数
+   */
+  
+onReachBottom: function() {
+  
+  var nextUrl = this.data.requestUrl + "?start=" + this.data.totalCount + "&count=20";
+  
+  util.http(nextUrl, this.processDoubanData); // 上面拼接好的新的url 进行请求
+  
+  wx.showNavigationBarLoading();
+
+  },
+
+
+36. 关于es6箭头函数扩展
+如果不知道当前this指的是调用方的环境this，还是当前环境中使用的this, 可以使用箭头函数，这样this就指向当前环境的this
+示例：
+（1）这里的this指的是调用方的this环境
+onLoad: function (options) {
+   
+ var movieId = options.id; // 接收父级页面（电影主页）传递过来的影片ID
+  
+  var url = app.globalData.doubanBase + "/v2/movie/subject/" + movieId; // 拼接请求地址
+
+  var movie = new Movie(url);
+  
+  var that = this;
+ 
+  movie.getMovieData(function (movie) {
+   
+   that.setData({
+    
+      movie:movie
+    
+   })
+  
+  })
+ },
+
+（2）使用箭头函数，this就指的当前
+onLoad: function (options) {
+   
+ var movieId = options.id; // 接收父级页面（电影主页）传递过来的影片ID
+  
+  var url = app.globalData.doubanBase + "/v2/movie/subject/" + movieId; // 拼接请求地址
+
+  var movie = new Movie(url);
+  
+  movie.getMovieData((movie) => {
+ 
+     this.setData({
+    
+    movie: movie
+   
+   })
+  
+  })
+ },

@@ -1,0 +1,19 @@
+<template name="starsTemplate">
+  <view class="stars-container">
+    <view class="stars">
+      <block wx:for="{{stars}}" wx:for-item="i" wx:key="">
+          <!-- 我发现用这个可以检测遍历出来的数据，与星星评分对应 -->
+           <!-- <text>{{i}}</text>  -->
+           <!-- 如果i==1表示是亮色星星，否则灰色星星 -->
+        <image wx:if="{{i==1}}" src="/images/icon/star.png"></image>
+        <image wx:else src="/images/icon/none-star.png"></image>
+      </block>
+      <!-- <image src="/images/icon/star.png"></image>
+      <image src="/images/icon/star.png"></image>
+      <image src="/images/icon/star.png"></image>
+      <image src="/images/icon/star.png"></image>
+      <image src="/images/icon/star.png"></image> -->
+    </view>
+    <text class="star-score">{{score}}</text>
+  </view>
+</template>
