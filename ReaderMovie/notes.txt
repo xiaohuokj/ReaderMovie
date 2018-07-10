@@ -437,3 +437,77 @@ onLoad: function (options) {
   
   })
  },
+ 
+ 37. form 表单相关组件 （（注意：更改图标大小用这个样式 transform:scale(0.8) 在css里设置））
+
+switch 开关选择器组件示例：
+<switch checked="{{false}}" name="switch" />
+checked	：	Boolean	 默认是false （未开启）	是否选中
+
+事件：bindchange 可以通过event.detail.value 获取到按钮当前点击事件 true 和 false
+
+https://developers.weixin.qq.com/miniprogram/dev/component/switch.html
+
+38. slider 滑动选择器
+
+与switch使用方法相似
+
+value 可以设置初始状态显示的值
+step 设置的值，是拖动时候每次的进度值，最好能被max设置的值整除，根据业务逻辑而定
+
+https://developers.weixin.qq.com/miniprogram/dev/component/slider.html
+
+39. input 输入框。
+
+属性较多
+https://developers.weixin.qq.com/miniprogram/dev/component/input.html
+
+
+40. radio 单项选择器，内部由多个<radio/>组成。如果多个radio 需要用  radio-group
+示例： 
+<radio-group class="radio-group" bindchange="radioChange">
+  <label class="radio" wx:for="{{items}}">
+    <radio value="{{item.name}}" checked="{{item.checked}}"/>{{item.value}}
+  </label>
+</radio-group>
+
+bindchange 事件要绑定在radio-group标签上面
+
+bindchange还是获取选择时的参数 （<radio-group/> 中的选中项发生变化时触发 change 事件，event.detail = {value: 选中项radio的value}）
+
+https://developers.weixin.qq.com/miniprogram/dev/component/radio.html
+
+
+41. checkbox 多选项目。 checkbox-group多项选择器，内部由多个checkbox组成。  (注意： 多选框，event.detail.value 是数组)
+
+
+bindchange <checkbox-group/>中选中项发生改变是触发 change 事件，detail = {value:[选中的checkbox的value的数组]}
+示例代码：
+<view class="section section_gap">
+  
+    <view class="section__title">checkbox</view>
+  
+    <checkbox-group name="checkbox"  bindchange="checkboxChange">
+
+        <label>
+     
+     <checkbox value="西湖醋鱼" />西湖醋鱼</label>
+    
+    <label>
+     
+     <checkbox value="糖醋排骨" />糖醋排骨</label>
+    
+    <label>
+          <checkbox value="松鼠桂鱼" />松鼠桂鱼</label>
+   
+     <label>
+          <checkbox value="酒酿丸子" />酒酿丸子</label>
+    
+    <label>
+          <checkbox value="鱼香肉丝" />鱼香肉丝</label>
+
+      </checkbox-group>
+  
+  </view>
+
+https://developers.weixin.qq.com/miniprogram/dev/component/checkbox.html
