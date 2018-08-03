@@ -1,0 +1,11 @@
+<view>
+  <swiper  bindchange='onSlideChangeEnd' indicator-dots="{{indicatorDots}}" autoplay="{{autoplay}}" interval="{{interval}}" circular="{{circular}}" vertical='{{vertical}}'>
+    <block wx:for="{{imgs}}" wx:for-index="index" wx:key="">
+      <swiper-item class="swiper-items">
+        <image class="swiper-image" src="{{item}}"></image>
+        <button class="button-img" open-type="getPhoneNumber" bindgetphonenumber="getPhoneNumber" wx:if="{{index == imgs.length - 2}}">获取手机号</button>
+        <button class="button-img"  bindtap="start" wx:if="{{index == imgs.length - 1}}">立即体验</button>
+      </swiper-item>
+    </block>
+  </swiper>
+</view>

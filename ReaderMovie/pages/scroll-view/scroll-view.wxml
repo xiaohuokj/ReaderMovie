@@ -1,0 +1,24 @@
+<!--pages/scroll-view/scroll-view.wxml-->
+<view class='section'>
+  <view>
+    <view><text>垂直滚动</text></view>
+    <scroll-view scroll-y='true' style='height:300px' bindscrolltoupper='bindscrolltoupper' bindscrolltolower='bindscrolltolower'>
+      <view style="background:red;width: 200px; height: 200px"></view>
+      <view style="background:green;width: 200px; height: 200px"></view>
+      <view style="background:blue;width: 200px; height: 200px"></view>
+      <view style="background:yellow;width: 200px; height: 200px"></view>
+    </scroll-view>
+    <view><text>水平滚动</text></view>
+    <scroll-view scroll-x='true' style="white-space: nowrap; display:flex">
+      <view style="background:red;width: 200px; height: 200px; display:inline-block "></view>
+      <view style="background:green;width: 200px; height: 200px;display:inline-block "></view>
+      <view style="background:blue;width: 200px; height: 200px;display:inline-block "></view>
+      <view style="background:yellow;width: 200px; height: 200px;display:inline-block "></view>
+    </scroll-view>
+  </view>
+  <view>
+    <view>
+      <text disabled>点击</text>
+    </view>
+  </view>
+</view>
